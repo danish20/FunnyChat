@@ -92,39 +92,6 @@ public class MainActivity extends AppCompatActivity {
         mMessageDatabaseReference = mFirebaseDatabase.getReference().child("message");
         mFirebaseAuth = FirebaseAuth.getInstance();
 
-        // add firebase child listener
-
-        mChildListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-                FriendlyMessage recievedMessage = dataSnapshot.getValue(FriendlyMessage.class);
-                mMessageAdapter.add(recievedMessage);
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        };
-
-        mMessageDatabaseReference.addChildEventListener(mChildListener);
-
         // Initialize message ListView and its adapter
         List<FriendlyMessage> friendlyMessages = new ArrayList<>();
         mMessageAdapter = new MessageAdapter(this, R.layout.item_message, friendlyMessages);
@@ -166,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: Send messages on click
+                //Send messages on click
 
                 mMessageDatabaseReference.push().setValue(new FriendlyMessage(mMessageEditText.getText().toString(),mUsername,null));
 
@@ -182,13 +149,15 @@ public class MainActivity extends AppCompatActivity {
                 FirebaseUser user=firebaseAuth.getCurrentUser();
                 if(user!=null)
                 {
-                    Toast.makeText(getApplicationContext(),"Login Successful",Toast.LENGTH_LONG).show();
+                    onSignedInIntialize(user.getDisplayName());
                 }
                 else
                 {
+                    onSignedOutCleanUp();
                     startActivityForResult(
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
+                                    .setIsSmartLockEnabled(false)
                                     .setProviders(
                                             AuthUI.EMAIL_PROVIDER,
                                             AuthUI.GOOGLE_PROVIDER
@@ -221,6 +190,65 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
+        if(mAuthStateListener!=null) {
+            mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
+        }
+        detachDatabaseReadListener();
+        mMessageAdapter.clear();
+    }
+
+    public void onSignedInIntialize(String mUsername)
+    {
+        this.mUsername=mUsername;
+        attachDatabaseReadListener();
+    }
+    public void onSignedOutCleanUp()
+    {
+        mUsername=ANONYMOUS;
+        mMessageAdapter.clear();
+        detachDatabaseReadListener();
+    }
+
+    public void attachDatabaseReadListener()
+    {
+        if(mChildListener==null) {
+            mChildListener = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+                    System.out.println("Danish Child Changed");
+                    FriendlyMessage recievedMessage = dataSnapshot.getValue(FriendlyMessage.class);
+                    mMessageAdapter.add(recievedMessage);
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            };
+            mMessageDatabaseReference.addChildEventListener(mChildListener);
+        }
+    }
+
+    public void detachDatabaseReadListener()
+    {
+        if(mChildListener!=null)
+        mMessageDatabaseReference.removeEventListener(mChildListener);
+        mChildListener=null;
     }
 }
