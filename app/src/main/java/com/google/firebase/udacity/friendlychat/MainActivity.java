@@ -116,6 +116,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // TODO: Send messages on click
 
+                mMessageDatabaseReference.push().setValue(new FriendlyMessage(mMessageEditText.getText().toString(),mUsername,null));
+
                 // Clear input box
                 mMessageEditText.setText("");
             }
