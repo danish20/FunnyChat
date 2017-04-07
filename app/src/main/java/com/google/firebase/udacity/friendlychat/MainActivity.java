@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.friendlychat;
 
 import android.content.Intent;
 import android.net.Uri;
